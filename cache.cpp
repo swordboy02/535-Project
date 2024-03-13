@@ -29,21 +29,24 @@ public:
     }
 
     void displayRAM() {
-        std::cout << "RAM Contents:\n";
-        for (int i = 0; i < memory.size(); ++i) {
-            std::cout << "Address " << i << ": " << memory[i] << std::endl;
+    std::cout << "RAM Contents:\n";
+    for (int i = 0; i < memory.size(); i += 4) {
+        std::cout << "Address " << i << ": ";
+        for (int j = 0; j < 4 && i + j < memory.size(); ++j) {
+            std::cout << memory[i + j] << " ";
         }
+        std::cout << std::endl;
     }
+}
 };
 
-//cache line structure
 struct CacheLine {
     bool valid;
     bool dirty;
     std::vector<int> data;
 };
 
-//cache class
+
 class Cache{
     private:
             int numLines;
@@ -108,7 +111,7 @@ class Cache{
     void displayCacheWithDelay(int delayMilliseconds) {
     std::cout << "Cache Contents:\n";
     for (int i = 0; i < numLines; ++i) {
-        std::cout << "Line " << i << ": Valid=" << cache[i].valid << ", Dirty=" << cache[i].dirty << std::endl;
+        std::cout << "Line " << i << ": V=" << cache[i].valid << ", D=" << cache[i].dirty << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMilliseconds));
         if (cache[i].valid) {
             std::cout << "Data:";
@@ -119,6 +122,7 @@ class Cache{
             std::this_thread::sleep_for(std::chrono::milliseconds(delayMilliseconds));
         }
     }
+    std::cout << "\n";
 }
     void incrementCycleCount() {
         cycleCount++;
@@ -168,8 +172,6 @@ int main() {
             ram.displayRAM();
         }
     }
-
-
     std::cout << "Cycle count: " << myCache.getCycleCount() << std::endl;
 
     auto end = std::chrono::high_resolution_clock::now();
