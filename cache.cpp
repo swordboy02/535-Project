@@ -170,7 +170,12 @@ int main() {
             myCache.displayCacheWithDelay(delayMilliseconds);
         } else if (command == "DISPLAYRAM") {
             ram.displayRAM();
-        }
+        } else if (command == "WAIT") {
+            std::cout << "Press Enter to continue...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        } else {
+            std::cerr << "Invalid command: " << command << std::endl;
+    }
     }
     std::cout << "Cycle count: " << myCache.getCycleCount() << std::endl;
 
