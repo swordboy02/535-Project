@@ -3,6 +3,8 @@
 #include <thread>
 #include <fstream>
 #include <sstream>
+#include <vector>
+#include <limits>
 #include <string>
 
 class RAM {
@@ -152,10 +154,9 @@ class Cache{
     }
 };
 
-void driver(std::ifstream& commandsFile) {
-    RAM ram(32);
-
-    Cache myCache(16, 4);
+void driverFile(int ramSize, int cacheLines, int lineSize, std::ifstream& commandsFile) {
+    RAM ram(ramSize);
+    Cache myCache(cacheLines, lineSize);
 
     std::string line;
     while (std::getline(commandsFile, line)) {
@@ -190,21 +191,76 @@ void driver(std::ifstream& commandsFile) {
 
 }
 
-int main() {
-    std::ifstream commandsFile("commands.txt");
-    if (!commandsFile.is_open()) {
-        std::cerr << "Failed to open commands file\n";
-        return 1;
+void driverInput(int ramSize, int cacheLines, int lineSize) {
+    RAM ram(ramSize);
+    Cache myCache(cacheLines, lineSize);
+    std::string line;
+    while (true) {
+        std::string command;
+        std::cout << "Enter command (R/W address [value], DISPLAYCACHE, DISPLAYCACHEDELAY delay_ms, DISPLAYRAM, WAIT, or EXIT): ";
+        std::getline(std::cin, line);
+        std::istringstream iss(line);
+        iss >> command;
+        
+        if (command == "EXIT")
+            break;
+        else if (command == "W") {
+            int address, value;
+            iss >> address >> value;
+            myCache.writeCache(address, value, ram);
+        } else if (command == "R") {
+            int address;
+            iss >> address;
+            myCache.readCache(address, ram);
+        } else if (command == "DISPLAYCACHE") {
+            myCache.displayCache();
+        } else if (command == "DISPLAYCACHEDELAY") {
+            int delayMilliseconds;
+            iss >> delayMilliseconds;
+            myCache.displayCacheWithDelay(delayMilliseconds);
+        } else if (command == "DISPLAYRAM") {
+            ram.displayRAM();
+        } else if (command == "WAIT") {
+            std::cout << "Press Enter to continue...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        } else {
+            std::cerr << "Invalid command: " << command << std::endl;
+        }
     }
+    std::cout << "\n";
+    std::cout << "Cycle count: " << myCache.getCycleCount() << std::endl;
+}
 
+int main() {
+    int ramSize, cacheLines, lineSize;
+    std::cout << "Enter RAM size: ";
+    std::cin >> ramSize;
+    std::cout << "Enter cache lines: ";
+    std::cin >> cacheLines;
+    std::cout << "Enter line size: ";
+    std::cin >> lineSize;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    //ask if user wants to input commands or use a file
+    std::string input;
+    std::cout << "Choose input method ( file [F] or input [I] ): ";
+    std::cin >> input;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     auto start = std::chrono::high_resolution_clock::now();
-    driver(commandsFile);
+    if (input == "F") {
+        std::ifstream commandsFile("commands.txt");
+        if (commandsFile.is_open()) {
+            driverFile(ramSize, cacheLines, lineSize, commandsFile);
+            commandsFile.close();
+        } else {
+            std::cerr << "Error: Could not open file\n";
+        }
+    } else if (input == "I") {
+        driverInput(ramSize, cacheLines, lineSize);
+    } else {
+        std::cerr << "Error: Invalid input method\n";
+    }
     auto end = std::chrono::high_resolution_clock::now();
-
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
-
-    commandsFile.close();
-
     return 0;
 }
